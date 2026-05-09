@@ -1,0 +1,45 @@
+# injection_patterns.txt — ICAP RESPMOD regex rules
+# Format: category:regex_pattern
+# Lines starting with # are comments
+
+# ── Prompt Injection — override system instructions ─────────────────────
+pi:ignore\s+(all\s+)?(previous|above|prior)\s+instructions
+pi:You\s+are\s+now\s+(DAN|STAN|jailbreak|unfiltered|evil)
+pi:respond\s+as\s+if\s+you\s+(are|were)\s+[a-z]+\s+(and|not)\s+[a-z]+
+pi:forget\s+(everything|your\s+training|your\s+instructions)
+pi:new\s+system\s+prompt:
+pi:from\s+now\s+on\s+you\s+are\s+(not\s+)?[a-z]+\s+you\s+are
+pi:ignore\s+all\s+previous\s+constraints
+pi:do\s+not\s+follow\s+your\s+(instructions|guidelines|rules|system\s+prompt)
+pi:override\s+(your\s+)?(system|core|base)\s+(prompt|instructions|directive)
+
+# ── Data Exfiltration — webhook/callback patterns ───────────────────────
+exfil:(webhook|bugmenot|requestbin|pipedream|hookbin|ngrok|serveo|localhost\.run|localtunnel)\.(site|com|net|org|io|gg|me|in|su|ru|pro|dev|app|page)
+exfil:curl\s+.*\|\s*(base64|nc|netcat)
+exfil:POST\s+https?://.*\.(webhook|ngrok|serveo|localhost\.run|localtunnel)
+exfil:XMLHttpRequest\(.*\.(webhook|ngrok|serveo|pipedream)
+
+# ── Command Injection — shell metacharacters in unexpected places ───────
+cmd:\$\{.*[;&|].*\}
+cmd:\`.*(bash|sh|zsh|dash|python|node|perl|ruby).*\`
+cmd:\bOS\s+Command\s+Injection\b
+cmd:%0[ad].*(bash|sh|python|perl|ruby|node)
+
+# ── Credential Theft — API keys and tokens in responses ─────────────────
+cred:sk-ant-[a-zA-Z0-9_-]{20,}
+cred:Bearer\s+[a-zA-Z0-9_\-\.]{20,}
+cred:api_key[=:]\s*['\"][a-zA-Z0-9_-]{10,}
+cred:-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----
+
+# ── Remote Code Execution — eval/exec patterns in text responses ────────
+rce:eval\(.*\)
+rce:exec\(.*\)
+rce:__import__\(.*\)
+rce:subprocess\.(call|run|Popen)\(
+rce:os\.system\(
+rce:Function\(['\"].*['\"]\s*,\s*['\"].*['\"]\)
+
+# ── Malicious MIME Types — executable content types ─────────────────────
+mime:application/x-(executable|sh|msdos|jar|elf)
+mime:Content-Type:\s*application/x-httpd-php
+mime:Content-Type:\s*text/(vbs|vbscript)

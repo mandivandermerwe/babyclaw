@@ -1,0 +1,40 @@
+# BabyClaw URL regex blacklist patterns
+# Case-insensitive matching. One pattern per line.
+
+# ── Gambling URL patterns ────────────────────────────────────────────────
+casino
+sportsbook
+betting
+poker-room
+slot-machine
+roulette
+blackjack
+baccarat
+craps-online
+wager
+bookmaker
+racebook
+
+# ── Cryptocurrency scam patterns ─────────────────────────────────────────
+airdrop.*claim
+free.*token.*giveaway
+crypto.*doubler
+send.*eth.*double
+wallet.*verify.*seed
+giveaway.*elon
+bitcoin.*multiplier
+nft.*mint.*free
+presale.*token
+ico.*whitelist
+smart-contract.*drain
+flash-loan.*attack
+
+# ── Phishing / credential theft ──────────────────────────────────────────
+metamask.*verify
+walletconnect.*validate
+login.*confirm.*account
+verify.*identity.*urgent
+account.*suspended.*verify
+security.*alert.*login
+password.*reset.*unusual
+unusual.*activity.*verify

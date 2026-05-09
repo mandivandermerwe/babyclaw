@@ -1,0 +1,78 @@
+# BabyClaw domain blacklist
+# These domains and their subdomains are blocked at the proxy level.
+# Format: one domain per line. Lines starting with # are comments.
+
+# ── Gambling ─────────────────────────────────────────────────────────────
+.bet365.com
+.betfair.com
+.betway.com
+.bwin.com
+.draftkings.com
+.fanduel.com
+.paddypower.com
+.pokerstars.com
+.sportingbet.com
+.unibet.com
+.williamhill.com
+.888.com
+.bovada.lv
+.betmgm.com
+.pointsbet.com
+.caesars.com
+.borgataonline.com
+.goldennuggetcasino.com
+.playnj.com
+.sugarhousecasino.com
+.twinspires.com
+
+# ── Cryptocurrency — scams, mixers, high-risk ────────────────────────────
+.1inch.io
+.aave.com
+.binance.com
+.bitfinex.com
+.bitmart.com
+.bittrex.com
+.bybit.com
+.coinbase.com
+.coinmarketcap.com
+.coingecko.com
+.cryptobridge.com
+.cryptocompare.com
+.dydx.exchange
+.gate.io
+.gemini.com
+.huobi.com
+.kraken.com
+.kucoin.com
+.localbitcoins.com
+.mexc.com
+.okx.com
+.pancakeswap.finance
+.poloniex.com
+.sushi.com
+.uniswap.org
+.uniswap.com
+
+# ── Known malware / phishing / scam TLDs ─────────────────────────────────
+.tk
+.ml
+.ga
+.cf
+.gq
+
+# ── Pornography ──────────────────────────────────────────────────────────
+.pornhub.com
+.xvideos.com
+.xhamster.com
+.redtube.com
+.youporn.com
+.xnxx.com
+.onlyfans.com
+.chaturbate.com
+.brazzers.com
+.realitykings.com
+.naughtyamerica.com
+.bangbros.com
+.twistys.com
+.mofos.com
+.digitalplayground.com

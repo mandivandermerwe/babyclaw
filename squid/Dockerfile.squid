@@ -1,0 +1,12 @@
+FROM ubuntu/squid:latest
+
+# Override the default entrypoint
+COPY squid.conf /etc/squid/squid.conf
+COPY blacklist.domains /etc/squid/blacklist.domains
+COPY blacklist.patterns /etc/squid/blacklist.patterns
+COPY squid-entrypoint.sh /squid-entrypoint.sh
+RUN chmod +x /squid-entrypoint.sh
+
+EXPOSE 3128
+ENTRYPOINT ["/squid-entrypoint.sh"]
+CMD ["squid", "-N", "-f", "/etc/squid/squid.conf"]
