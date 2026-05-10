@@ -1,0 +1,43 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.20.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ['@commitlint/config-conventional']
+
+  - repo: local
+    hooks:
+      - id: forbid-private-files
+        name: Block private config files
+        entry: |
+          bash -c '
+            private_files=(
+              "claw/soul.md"
+              "claw/agents.md"
+              "claw/sources.md"
+              "claw/cron/"
+              "docker-compose.yml"
+              "vendir.yml"
+              "vendir.lock.yml"
+              "secrets.env"
+              ".env"
+              "certs/babyclaw-ca.key"
+              "certs/babyclaw-ca.pem"
+            )
+            for f in "${private_files[@]}"; do
+              if git diff --cached --name-only | grep -q "^${f}"; then
+                echo "ERROR: $f must not be committed to the public repo."
+                echo "These files live in the private babyclaw-preferences repo."
+                exit 1
+              fi
+            done
+          '
+        language: system
+        files: ''
+        pass_filenames: false

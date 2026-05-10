@@ -1,0 +1,14 @@
+{
+  "name": "babyclaw",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lightweight Secure OpenClaw Deployment Stack",
+  "scripts": {
+    "test": "echo 'No tests yet'"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^25.0.3"
+  }
+}

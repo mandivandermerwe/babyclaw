@@ -315,6 +315,29 @@ no LLM judge. These are the right trade-offs for a single-user home server
 where the threat model is prompt injection and content poisoning, not
 persistent advanced threats.
 
+## Pre-commit Hooks
+
+This repo enforces commit integrity with [pre-commit](https://pre-commit.com) hooks.
+Install them once after cloning:
+
+```bash
+brew install pre-commit   # macOS
+pre-commit install --hook-type pre-commit
+pre-commit install --hook-type commit-msg
+```
+
+Three guardrails run on every commit:
+
+| Hook | Stage | What it does |
+|------|-------|--------------|
+| **gitleaks** | pre-commit | Scans staged files for hardcoded secrets (API keys, tokens, passwords) |
+| **forbid-private-files** | pre-commit | Blocks files that belong in the private `babyclaw-preferences` repo — even if force-staged with `git add -f` |
+| **commitlint** | commit-msg | Requires [Conventional Commits](https://www.conventionalcommits.org/) format (`feat:`, `fix:`, `chore:`, etc.) |
+
+The `forbid-private-files` hook mirrors `.gitignore` — it prevents accidentally pushing
+`claw/soul.md`, `claw/agents.md`, `claw/sources.md`, `claw/cron/`, `docker-compose.yml`,
+`vendir.yml`, `vendir.lock.yml`, `secrets.env`, `.env`, and TLS private keys.
+
 ## Requirements
 
 - Docker Engine 24.0+ with Docker Compose
@@ -322,6 +345,7 @@ persistent advanced threats.
 - A [LiteLLM](https://docs.litellm.ai) gateway or Anthropic API key
 - Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
 - [vendir](https://carvel.dev/vendir/) for config syncing (or copy files manually)
+- [pre-commit](https://pre-commit.com) for commit guardrails
 
 ## License
 
