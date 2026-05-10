@@ -12,3 +12,6 @@ claw/cron/
 docker-compose.yml
 vendir.yml
 vendir.lock.yml
+
+# The usual suspects
+node_modules/
