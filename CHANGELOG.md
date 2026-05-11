@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/sdkks/babyclaw/compare/v1.1.0...v1.1.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **proxy:** tunnel Telegram without TLS interception ([a310dc1](https://github.com/sdkks/babyclaw/commit/a310dc156770f35e8b88f3bddb4a7abb3d4c1c41))
+
 # [1.1.0](https://github.com/sdkks/babyclaw/compare/v1.0.1...v1.1.0) (2026-05-11)
 
 
