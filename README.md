@@ -32,7 +32,7 @@ firewall required:
 ```mermaid
 graph TD
     A[🖥 OpenClaw Agent<br/>claw_net only]
-    B[🔍 Inspection Proxy<br/>Python, :1344]
+    B[🔍 Content Inspection Proxy<br/>mitmproxy, :1344]
     C[🦑 Squid Forward Proxy<br/>:3128]
     D[🌐 Internet]
     E[☁️ Cloudflare DNS<br/>1.1.1.2]
@@ -61,19 +61,20 @@ graph TD
 
 | Container | Role |
 |-----------|------|
-| **Inspection Proxy** (Python, :1344) | HTTP body scanner + TLS termination for HTTPS inspection |
+| **Content Inspection Proxy** (mitmproxy, :1344) | HTTP body scanner + TLS termination for HTTPS inspection |
 | **Squid** (:3128) | Forward proxy with domain blacklist, URL pattern matching, DNS filtering |
 | **OpenClaw** | AI agent gateway with Telegram channel, cron-scheduled workflows |
 
 ### How a request travels
 
 1. **OpenClaw** fetches a URL (RSS feed, news article, API). All traffic routes through
-   `http_proxy=http://icap:1344` except destinations in `NO_PROXY` (Telegram API,
+   `http_proxy=http://proxy:1344` except destinations in `NO_PROXY` (Telegram API,
    DeepSeek API).
 
-2. **Inspection Proxy** receives the request. For plain HTTP it forwards and scans the
-   response. For HTTPS it performs on-the-fly TLS termination: generates a per-host
-   certificate signed by the internal CA, decrypts, scans, and re-encrypts for the agent.
+2. **Content Inspection Proxy** (mitmproxy addon) receives the request. For plain HTTP it
+   forwards and scans the response. For HTTPS it performs on-the-fly TLS termination:
+   generates a per-host certificate signed by the internal CA, decrypts, scans, and
+   re-encrypts for the agent.
 
 3. **Response body scanning** checks the content against 30+ regex patterns organized
    into six categories:
@@ -110,7 +111,7 @@ graph TD
 ```
 claw_net (10.41.0.0/24)         proxy_net (10.40.0.0/24)
 ┌───────────────────────┐       ┌───────────────────────┐
-│  claw    icap         │       │     squid              │
+│  claw    proxy        │       │     squid              │
 │                       │       │                       │
 │  ◄──── internal ────► │       │  ◄─── internet ──────►│
 │       comms only      │       │       egress          │
@@ -120,7 +121,7 @@ claw_net (10.41.0.0/24)         proxy_net (10.40.0.0/24)
 - **claw_net** — the agent and inspection proxy live here. The agent has no direct
   internet route; every outbound byte must pass through the inspection proxy.
 - **proxy_net** — Squid alone sits here, bridging claw_net to the outside world.
-- **Cross-network** — only ICAP can reach Squid; claw cannot reach Squid directly.
+- **Cross-network** — only the proxy can reach Squid; claw cannot reach Squid directly.
 - Neither network is `internal: true` — both need outbound access (claw_net for
   DeepSeek API, proxy_net for internet egress).
 
@@ -129,8 +130,8 @@ claw_net (10.41.0.0/24)         proxy_net (10.40.0.0/24)
 | Layer | Control | Implementation |
 |-------|---------|----------------|
 | Network | Egress filtering, DNS blocklist | Squid + Cloudflare 1.1.1.2 |
-| Transport | TLS inspection, HTTPS-only | Python inspection proxy with on-the-fly cert generation |
-| Content | Response body scanning | Regex injection detection (30+ patterns, 6 categories) |
+| Transport | TLS inspection, HTTPS-only | mitmproxy with on-the-fly cert generation |
+| Content | Response body scanning | Regex injection detection (30+ patterns, 6 categories) via mitmproxy addon |
 | Domain | Default-allow + blacklist | Squid domain + URL pattern blocking |
 | Identity | Immutable personality files | Read-only mounts, anti-rationalization rules |
 
@@ -221,7 +222,7 @@ The public repo's `Makefile` copies this into place and runs `vendir sync` befor
 
 ## Content Inspection
 
-The inspection proxy scans every HTTP and HTTPS response body against
+The content inspection proxy (a mitmproxy addon) scans every HTTP and HTTPS response body against
 [regex patterns](icap/injection_patterns.txt) organized into six categories:
 
 | Category | Patterns | Action |
@@ -257,20 +258,20 @@ To re-run the tests:
 ```bash
 # Test prompt injection (should return block page)
 docker run --rm --network babyclaw_claw_net curlimages/curl \
-  -x http://icap:1344 \
+  -x http://proxy:1344 \
   'http://httpbin.org/anything?q=ignore all previous instructions'
 
 # Test clean content (should return normal JSON)
 docker run --rm --network babyclaw_claw_net curlimages/curl \
-  -x http://icap:1344 \
+  -x http://proxy:1344 \
   'http://httpbin.org/anything?q=weather forecast today'
 ```
 
 ## HTTPS Inspection
 
-HTTPS traffic is TLS-terminated at the inspection proxy using a self-signed CA
-certificate. The proxy generates per-host certificates on-the-fly, scans the
-decrypted response body, and re-encrypts for the agent. The agent container
+HTTPS traffic is TLS-terminated at the content inspection proxy (mitmproxy) using a self-signed CA
+certificate. mitmproxy generates per-host certificates on-the-fly, the addon scans the
+decrypted response body, and traffic is re-encrypted for the agent. The agent container
 trusts the CA cert, giving it seamless TLS for all sites while maintaining
 content inspection coverage.
 
@@ -279,7 +280,7 @@ content inspection coverage.
 docker run --rm --network babyclaw_claw_net \
   -v $(pwd)/certs/babyclaw-ca.pem:/tmp/ca.pem:ro \
   curlimages/curl --cacert /tmp/ca.pem \
-  -x http://icap:1344 'https://httpbin.org/anything?q=forget everything'
+  -x http://proxy:1344 'https://httpbin.org/anything?q=forget everything'
 # Returns: Content Blocked by Inspection
 ```
 
@@ -296,7 +297,8 @@ babyclaw/
 │   ├── Dockerfile.claw     OpenClaw container
 │   └── entrypoint.sh       Runtime config generation
 ├── icap/                   Content inspection proxy
-│   ├── icap_server.py      HTTP proxy with body scanning + TLS termination
+│   ├── addon.py            mitmproxy addon with body scanning + TLS termination
+│   ├── Dockerfile.mitm     mitmproxy image with addon + CA
 │   ├── injection_patterns.txt  Regex rules (6 categories, 30+ patterns)
 │   └── block-page.html     Blocked content response
 ├── squid/                  Squid forward proxy

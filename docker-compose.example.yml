@@ -42,20 +42,18 @@ services:
     dns:
       - 1.1.1.2                         # Cloudflare malware-filtering DNS
 
-  # ── c-icap content inspection server ─────────────────────────────────
-  icap:
+  # ── mitmproxy content inspection proxy ───────────────────────────────
+  proxy:
     build:
       context: ./icap
-      dockerfile: Dockerfile.cicap
-    container_name: babyclaw-icap
+      dockerfile: Dockerfile.mitm
+    container_name: babyclaw-proxy
     restart: unless-stopped
     volumes:
       - ./icap/injection_patterns.txt:/etc/icap/injection_patterns.txt:ro
       - ./icap/block-page.html:/etc/icap/block-page.html:ro
-      - ./icap/icap_server.py:/app/icap_server.py:ro
-      - ./certs:/etc/icap/ca:ro
-    tmpfs:
-      - /tmp:size=64M,mode=1777
+      - ./certs/babyclaw-ca.pem:/etc/icap/ca/babyclaw-ca.pem:ro
+      - ./certs/babyclaw-ca.key:/etc/icap/ca/babyclaw-ca.key:ro
     networks:
       - claw_net
     security_opt:
@@ -63,16 +61,16 @@ services:
     cap_drop:
       - ALL
     read_only: true
-    mem_limit: 128M
-    mem_reservation: 64M
-    cpus: "0.5"
-    pids_limit: 32
+    mem_limit: 256M
+    mem_reservation: 128M
+    cpus: "1.0"
+    pids_limit: 64
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(); s.connect(('127.0.0.1',1344)); s.close()"]
+      test: ["CMD", "mitmdump", "--version"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
   # ── OpenClaw — warm standby, polls Telegram, runs news digest ────────
   claw:
@@ -88,8 +86,8 @@ services:
       - secrets.env
     environment:
       # Route ALL traffic through inspection proxy (→ Squid → internet)
-      - http_proxy=http://icap:1344
-      - https_proxy=http://icap:1344
+      - http_proxy=http://proxy:1344
+      - https_proxy=http://proxy:1344
       - NO_PROXY=127.0.0.1,localhost,192.168.65.254,host.docker.internal,api.telegram.org,litellm-bridge,litellm-bridge:4000
       # LiteLLM API key for local gateway (ollama token)
       - LITELLM_API_KEY=${LITELLM_API_KEY:-ollama}
