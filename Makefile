@@ -11,4 +11,4 @@ sync:
 	@echo "Config synced from $(PREFERENCES_DIR)"
 
 up: sync
-	docker-compose up -d
+	docker compose up -d

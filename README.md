@@ -24,14 +24,14 @@ firewall required:
   domains, and phishing sites at the proxy
 - **Prompt injection detection** — regex-based response body scanning catches
   known injection, jailbreak, and exfiltration patterns before they reach the agent
-- **Default-deny network** — agent container has no direct internet route; all
-  traffic forced through the inspection chain
+- **Proxy-enforced traffic** — all outbound traffic is routed through the inspection
+  chain via `http_proxy`/`https_proxy` environment variables
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[🖥 OpenClaw Agent<br/>claw_net only]
+    A[🖥 OpenClaw Agent<br/>claw_net (proxied)]
     B[🔍 Content Inspection Proxy<br/>mitmproxy, :1344]
     C[🦑 Squid Forward Proxy<br/>:3128]
     D[🌐 Internet]
@@ -49,8 +49,6 @@ graph TD
     end
 
     A -->|"all traffic<br/>http_proxy + https_proxy"| B
-    A -->|"NO_PROXY bypass"| F
-    A -->|"NO_PROXY bypass"| G
     B -->|"forward to upstream"| C
     C -->|"resolve via"| E
     C -->|"egress"| D
@@ -68,8 +66,8 @@ graph TD
 ### How a request travels
 
 1. **OpenClaw** fetches a URL (RSS feed, news article, API). All traffic routes through
-   `http_proxy=http://proxy:1344` except destinations in `NO_PROXY` (Telegram API,
-   DeepSeek API).
+   `http_proxy=http://proxy:1344` except destinations in `NO_PROXY`
+   (`127.0.0.1`, `localhost`, `192.168.65.254`, `host.docker.internal`).
 
 2. **Content Inspection Proxy** (mitmproxy addon) receives the request. For plain HTTP it
    forwards and scans the response. For HTTPS it performs on-the-fly TLS termination:
@@ -102,9 +100,11 @@ graph TD
    - **HTTPS enforcement** — only allows outbound connections on ports 80, 443, 4000, 8080
 
 5. **What's NOT inspected:**
-   - Telegram API calls (bypassed via `NO_PROXY` — bot token is already scoped)
-   - DeepSeek API calls (bypassed — trusted model provider endpoint)
-   - Localhost traffic (exempt from proxy chain)
+   - Telegram API calls — response body scanning skipped via `bypass_domains.txt`
+     (request still flows through proxy chain; bot token is scoped)
+   - DeepSeek API calls — response body scanning skipped via `bypass_domains.txt`
+     (request still flows through proxy chain)
+   - Localhost traffic (exempt from proxy chain via `NO_PROXY`)
 
 ### Network isolation
 
@@ -118,12 +118,13 @@ claw_net (10.41.0.0/24)         proxy_net (10.40.0.0/24)
 └───────────────────────┘       └───────────────────────┘
 ```
 
-- **claw_net** — the agent and inspection proxy live here. The agent has no direct
-  internet route; every outbound byte must pass through the inspection proxy.
+- **claw_net** — the agent and inspection proxy live here. Outbound traffic is
+  forced through the inspection proxy via `http_proxy`/`https_proxy` environment
+  variables, not via network-level isolation.
 - **proxy_net** — Squid alone sits here, bridging claw_net to the outside world.
 - **Cross-network** — only the proxy can reach Squid; claw cannot reach Squid directly.
-- Neither network is `internal: true` — both need outbound access (claw_net for
-  DeepSeek API, proxy_net for internet egress).
+- Neither network is `internal: true` — proxy enforcement is via environment
+  variables, not network isolation. `proxy_net` provides internet egress for Squid.
 
 ### Defense layers at a glance
 
@@ -176,14 +177,11 @@ babyclaw-preferences/            (private — your config)
 ## Quick Start
 
 ```bash
-# 1. Generate TLS CA certificate (one-time)
-./certs/generate-ca.sh
-
-# 2. Create secrets file
+# 1. Create secrets file
 cp secrets.env.example secrets.env
 # Edit secrets.env with your DeepSeek API key and Telegram bot token
 
-# 3. Set up your preferences (private config repo)
+# 2. Set up your preferences (private config repo)
 mkdir -p ../babyclaw-preferences/claw ../babyclaw-preferences/vendir
 cp claw/soul.example.md ../babyclaw-preferences/claw/soul.md
 cp claw/agents.example.md ../babyclaw-preferences/claw/agents.md
@@ -191,10 +189,10 @@ cp claw/sources.example.md ../babyclaw-preferences/claw/sources.md
 # Customize those files with your preferences
 # Create vendir/vendir.yml pointing at your private repo
 
-# 4. Build and start (syncs config + starts stack)
+# 3. Build and start (syncs config + starts stack)
 make up
 
-# 5. Test the agent
+# 4. Test the agent
 docker exec babyclaw-claw openclaw agent \
   --session-id test --message "What is the weather today?"
 ```
@@ -218,7 +216,7 @@ directories:
 ```
 
 The public repo's `Makefile` copies this into place and runs `vendir sync` before
-`docker-compose up`.
+`docker compose up -d`.
 
 ## Content Inspection
 
@@ -276,9 +274,11 @@ trusts the CA cert, giving it seamless TLS for all sites while maintaining
 content inspection coverage.
 
 ```bash
-# Test HTTPS inspection (requires CA trust)
+# Test HTTPS inspection (copy CA from proxy container first)
+docker cp babyclaw-proxy:/ca-share/mitmproxy-ca.pem /tmp/mitmproxy-ca.pem
+
 docker run --rm --network babyclaw_claw_net \
-  -v $(pwd)/certs/babyclaw-ca.pem:/tmp/ca.pem:ro \
+  -v /tmp/mitmproxy-ca.pem:/tmp/ca.pem:ro \
   curlimages/curl --cacert /tmp/ca.pem \
   -x http://proxy:1344 'https://httpbin.org/anything?q=forget everything'
 # Returns: Content Blocked by Inspection
@@ -288,7 +288,6 @@ docker run --rm --network babyclaw_claw_net \
 
 ```
 babyclaw/
-├── certs/                  TLS CA generation script
 ├── claw/                   OpenClaw agent config (example templates + gitignored real files)
 │   ├── soul.example.md     Agent voice template — copy and customize
 │   ├── agents.example.md   Workflow rules template — copy and customize
@@ -296,17 +295,19 @@ babyclaw/
 │   ├── cron/               12-hour digest schedule
 │   ├── Dockerfile.claw     OpenClaw container
 │   └── entrypoint.sh       Runtime config generation
-├── icap/                   Content inspection proxy
+├── icap/                   Content inspection proxy (mitmproxy addon)
 │   ├── addon.py            mitmproxy addon with body scanning + TLS termination
-│   ├── Dockerfile.mitm     mitmproxy image with addon + CA
+│   ├── Dockerfile.mitm     mitmproxy image with addon
 │   ├── injection_patterns.txt  Regex rules (6 categories, 30+ patterns)
+│   ├── bypass_domains.txt  Domains whose response bodies skip scanning
 │   └── block-page.html     Blocked content response
 ├── squid/                  Squid forward proxy
 │   ├── squid.conf          Default-allow + blacklist + DNS filtering
 │   ├── blacklist.domains   Gambling, crypto, malware, adult domains
 │   └── blacklist.patterns  URL-level blocking patterns
+├── docker-compose.yml      Gitignored — synced from private preferences repo
 ├── docker-compose.example.yml  Stack orchestration template
-├── Makefile                vendir sync + docker-compose up
+├── Makefile                vendir sync + docker compose up
 └── secrets.env.example     Environment variable template
 ```
 
@@ -348,13 +349,13 @@ The default entrypoint ships with DeepSeek as an example, but you can switch to 
 OpenAI-compatible API by editing the provider block in `entrypoint.sh` and the model
 references in `claw/cron/jobs.example.json`. Configure your API key in `secrets.env`.
 
-If you prefer an LLM gateway (LiteLLM, OpenRouter, etc.), set the provider `baseUrl`
+If you prefer an LLM gateway (OpenRouter, etc.), set the provider `baseUrl`
 and model IDs accordingly — the proxy chain passes all headers and request bodies
 through transparently.
 
 ## Requirements
 
-- Docker Engine 24.0+ with Docker Compose
+- Docker Engine 24.0+ with Docker Compose v2 (`docker compose` plugin)
 - 4GB RAM available (stack uses ~2.5GB at peak)
 - An API key for your LLM provider (default: [DeepSeek](https://platform.deepseek.com/api_keys))
 - Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
