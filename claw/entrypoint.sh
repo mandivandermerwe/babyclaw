@@ -16,9 +16,20 @@ CONFIG_FILE="$HOME/.openclaw/openclaw.json"
 IDENTITY_FILE="$HOME/.openclaw/agents/main/agent/IDENTITY.md"
 USER_FILE="$HOME/.openclaw/agents/main/agent/USER.md"
 
-# ── Generate config on first boot (preserve across restarts) ──────────
+# ── Generate config on first boot, or update model if stale ───────────
+GENERATE_CONFIG=false
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "[babyclaw] First boot — generating config..."
+  GENERATE_CONFIG=true
+else
+  # Check if existing config still references the old LiteLLM/Claude model
+  if grep -q 'claude-haiku-4-5' "$CONFIG_FILE" 2>/dev/null; then
+    echo "[babyclaw] Stale model detected (claude-haiku-4-5) — regenerating agent config..."
+    GENERATE_CONFIG=true
+  fi
+fi
+
+if [ "$GENERATE_CONFIG" = true ]; then
   cat > "$CONFIG_FILE" << JSONEOF
 {
   "models": {
