@@ -1,0 +1,4 @@
+# Domains bypassed from content inspection.
+# Traffic still flows through mitmproxy → Squid, but response bodies
+# are not scanned against injection_patterns.txt.
+api.telegram.org

@@ -52,6 +52,7 @@ services:
     volumes:
       - ./icap/injection_patterns.txt:/etc/icap/injection_patterns.txt:ro
       - ./icap/block-page.html:/etc/icap/block-page.html:ro
+      - ./icap/bypass_domains.txt:/etc/icap/bypass_domains.txt:ro
       - ./certs/babyclaw-ca.pem:/etc/icap/ca/babyclaw-ca.pem:ro
       - ./certs/babyclaw-ca.key:/etc/icap/ca/babyclaw-ca.key:ro
     networks:
@@ -88,7 +89,7 @@ services:
       # Route ALL traffic through inspection proxy (→ Squid → internet)
       - http_proxy=http://proxy:1344
       - https_proxy=http://proxy:1344
-      - NO_PROXY=127.0.0.1,localhost,192.168.65.254,host.docker.internal,api.telegram.org
+      - NO_PROXY=127.0.0.1,localhost,192.168.65.254,host.docker.internal
       # DeepSeek API key (from platform.deepseek.com)
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       # Telegram bot

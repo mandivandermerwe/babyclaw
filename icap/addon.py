@@ -1,16 +1,17 @@
 """mitmproxy addon: content inspection against regex patterns.
 
-Matches response bodies against injection_patterns.txt (same format the
-hand-rolled proxy used). Blocks with a 403 page on match, passes all other
-traffic through transparently.
+Matches response bodies against injection_patterns.txt. Blocks with a 403
+page on match. Domains in BYPASS_DOMAINS pass through uninspected.
+
+Flow: Claw → mitmproxy:1344 → Squid:3128 → internet
 """
 import re
 from pathlib import Path
 
 import mitmproxy.http
-from mitmproxy import flowfilter
 
 PATTERNS_FILE = Path("/etc/icap/injection_patterns.txt")
+BYPASS_FILE = Path("/etc/icap/bypass_domains.txt")
 BLOCK_PAGE = Path("/etc/icap/block-page.html").read_bytes()
 MAX_BODY_SIZE = 5 * 1024 * 1024
 
@@ -29,12 +30,30 @@ def load_patterns():
     return patterns
 
 
+def load_bypass_domains():
+    domains = set()
+    if not BYPASS_FILE.exists():
+        return domains
+    for line in BYPASS_FILE.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            domains.add(line)
+    return domains
+
+
 PATTERNS = load_patterns()
-print(f"[babyclaw] loaded {len(PATTERNS)} inspection patterns")
+BYPASS_DOMAINS = load_bypass_domains()
+print(f"[babyclaw] loaded {len(PATTERNS)} patterns, {len(BYPASS_DOMAINS)} bypass domains")
 
 
 class BabyClawInspector:
+    def should_inspect(self, flow: mitmproxy.http.HTTPFlow) -> bool:
+        host = flow.request.pretty_host
+        return host not in BYPASS_DOMAINS
+
     def response(self, flow: mitmproxy.http.HTTPFlow):
+        if not self.should_inspect(flow):
+            return
         if not flow.response or not flow.response.content:
             return
         if len(flow.response.content) > MAX_BODY_SIZE:
