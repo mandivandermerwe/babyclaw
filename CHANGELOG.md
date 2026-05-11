@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/sdkks/babyclaw/compare/v1.1.1...v1.1.2) (2026-05-11)
+
+
+### Bug Fixes
+
+* **claw:** detect and regenerate stale agent model on boot ([05d4591](https://github.com/sdkks/babyclaw/commit/05d4591dbf2ed70b79d785dd2028794d9fb7d84e))
+
 ## [1.1.1](https://github.com/sdkks/babyclaw/compare/v1.1.0...v1.1.1) (2026-05-11)
 
 
