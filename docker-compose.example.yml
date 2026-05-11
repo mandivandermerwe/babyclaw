@@ -35,10 +35,11 @@ services:
     cpus: "1.0"
     pids_limit: 256
     healthcheck:
-      test: ["CMD-SHELL", "test -f /run/squid/squid.pid && kill -0 $(cat /run/squid/squid.pid) 2>/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:3128/ || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 3
+      start_period: 15s
     dns:
       - 1.1.1.2                         # Cloudflare malware-filtering DNS
 
