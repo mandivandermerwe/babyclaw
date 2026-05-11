@@ -1,9 +1,8 @@
 FROM mitmproxy/mitmproxy:11.1.3
 
-USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /etc/icap && chown -R mitmproxy:mitmproxy /etc/icap
+    mkdir -p /etc/icap
 
 COPY addon.py /app/addon.py
 COPY injection_patterns.txt /etc/icap/injection_patterns.txt
@@ -11,6 +10,5 @@ COPY block-page.html /etc/icap/block-page.html
 COPY proxy-entrypoint.sh /proxy-entrypoint.sh
 RUN chmod +x /proxy-entrypoint.sh
 
-USER mitmproxy
 EXPOSE 1344
 ENTRYPOINT ["/proxy-entrypoint.sh"]
