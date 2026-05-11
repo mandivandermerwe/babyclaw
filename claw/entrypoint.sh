@@ -118,6 +118,17 @@ cp /home/claw/.openclaw/agents.md "$HOME/AGENTS.md" 2>/dev/null || true
 cp /home/claw/.openclaw/workspace/SOURCES.md "$HOME/SOURCES.md" 2>/dev/null || true
 cp /home/claw/.openclaw/cron/jobs.json "$HOME/.openclaw/cron/jobs.json" 2>/dev/null || true
 
+# ── Copy proxy CA cert to a local path with correct permissions ──────
+# The named volume may have restrictive ownership from the proxy
+# container (different UID). Copy to tmpfs so Node.js can read it.
+if [ -f /etc/ssl/certs/proxy-ca/mitmproxy-ca.pem ]; then
+    mkdir -p /tmp/proxy-ca
+    cp -f /etc/ssl/certs/proxy-ca/mitmproxy-ca.pem /tmp/proxy-ca/mitmproxy-ca.pem
+    chmod 644 /tmp/proxy-ca/mitmproxy-ca.pem
+    export NODE_EXTRA_CA_CERTS=/tmp/proxy-ca/mitmproxy-ca.pem
+    echo "[babyclaw] Proxy CA cert copied to /tmp/proxy-ca/mitmproxy-ca.pem"
+fi
+
 # ── Remove bootstrap blocker if it exists ────────────────────────────
 rm -f "$HOME/BOOTSTRAP.md" "$HOME/.openclaw/agents/main/agent/BOOTSTRAP.md"
 
