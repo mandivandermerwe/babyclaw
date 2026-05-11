@@ -31,30 +31,25 @@ firewall required:
 
 ```mermaid
 graph TD
-    A[🖥 OpenClaw Agent<br/>claw_net (proxied)]
-    B[🔍 Content Inspection Proxy<br/>mitmproxy, :1344]
-    C[🦑 Squid Forward Proxy<br/>:3128]
-    D[🌐 Internet]
-    E[☁️ Cloudflare DNS<br/>1.1.1.2]
-    F[📱 Telegram API<br/>api.telegram.org]
-    G[🤖 DeepSeek API<br/>api.deepseek.com]
+    A[OpenClaw Agent]
+    B[Content Inspection Proxy<br/>mitmproxy :1344]
+    C[Squid Forward Proxy<br/>:3128]
+    D[Internet]
+    E[Cloudflare DNS<br/>1.1.1.2]
 
-    subgraph "Docker Network: claw_net (10.41.0.0/24)"
+    subgraph "claw_net"
         A
         B
     end
 
-    subgraph "Docker Network: proxy_net (10.40.0.0/24)"
+    subgraph "proxy_net"
         C
     end
 
-    A -->|"all traffic<br/>http_proxy + https_proxy"| B
-    B -->|"forward to upstream"| C
-    C -->|"resolve via"| E
-    C -->|"egress"| D
-
-    B -.->|"1. TLS-terminate<br/>2. Scan response body<br/>3. Block or pass"| B
-    C -.->|"1. Check domain<br/>2. Check URL pattern<br/>3. Block or forward"| C
+    A -->|http_proxy / https_proxy| B
+    B -->|upstream| C
+    C -->|DNS| E
+    C -->|egress| D
 ```
 
 | Container | Role |
