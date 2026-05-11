@@ -3,27 +3,33 @@ set -euo pipefail
 
 CA_DIR="/home/mitmproxy/.mitmproxy"
 CA_SHARE="/ca-share"
-CA_KEY="$CA_DIR/mitmproxy-ca.key"
-CA_CERT="$CA_DIR/mitmproxy-ca.pem"
+CA_COMBINED="$CA_DIR/mitmproxy-ca.pem"
 
-if [ ! -f "$CA_CERT" ]; then
+if [ ! -f "$CA_COMBINED" ]; then
     echo "[proxy] Generating CA..."
     mkdir -p "$CA_DIR"
+
+    # Generate key and cert to temp files
     openssl req -x509 -newkey rsa:2048 -nodes \
-        -keyout "$CA_KEY" \
-        -out "$CA_CERT" \
+        -keyout "$CA_DIR/key.tmp" \
+        -out "$CA_DIR/cert.tmp" \
         -days 3650 \
         -subj "/CN=mitmproxy/O=BabyClaw/C=SG" \
         -addext "basicConstraints=critical,CA:TRUE" \
         -addext "keyUsage=critical,keyCertSign,cRLSign"
-    chmod 600 "$CA_KEY"
-    chmod 644 "$CA_CERT"
-    echo "[proxy] CA generated: $CA_CERT"
+
+    # mitmproxy expects mitmproxy-ca.pem to contain BOTH key and cert
+    cat "$CA_DIR/key.tmp" "$CA_DIR/cert.tmp" > "$CA_COMBINED"
+    chmod 600 "$CA_COMBINED"
+    rm -f "$CA_DIR/key.tmp" "$CA_DIR/cert.tmp"
+
+    echo "[proxy] CA generated: $CA_COMBINED"
 fi
 
-# Share CA cert with claw container via named volume
+# Share CA cert (public portion only) with claw container via named volume
 if [ -d "$CA_SHARE" ] && [ -w "$CA_SHARE" ]; then
-    cp -f "$CA_CERT" "$CA_SHARE/mitmproxy-ca.pem"
+    # Extract just the certificate portion for the trust store
+    openssl x509 -in "$CA_COMBINED" -out "$CA_SHARE/mitmproxy-ca.pem"
     chmod 644 "$CA_SHARE/mitmproxy-ca.pem"
 fi
 
