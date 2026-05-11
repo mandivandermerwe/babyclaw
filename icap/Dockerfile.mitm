@@ -16,7 +16,7 @@ EXPOSE 1344
 # and mount the public cert for the claw container to trust.
 # The claw container adds /etc/ssl/certs/mitmproxy-ca.pem via
 # NODE_EXTRA_CA_CERTS.
-ENTRYPOINT ["mitmproxy", "--mode", "upstream:http://squid:3128", \
+ENTRYPOINT ["mitmdump", "--mode", "upstream:http://squid:3128", \
     "--listen-host", "0.0.0.0", "--listen-port", "1344", \
     "--set", "connection_strategy=lazy", \
     "--set", "tls_version_server_min=UNBOUNDED", \
