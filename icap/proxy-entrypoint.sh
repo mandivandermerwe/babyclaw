@@ -2,25 +2,27 @@
 set -euo pipefail
 
 CA_DIR="/home/mitmproxy/.mitmproxy"
-CA_TMP="/tmp/mitmproxy-ca"
+CA_SHARE="/ca-share"
 CA_KEY="$CA_DIR/mitmproxy-ca.key"
 CA_CERT="$CA_DIR/mitmproxy-ca.pem"
 
 if [ ! -f "$CA_CERT" ]; then
     echo "[proxy] Generating CA..."
-    mkdir -p "$CA_TMP"
+    mkdir -p "$CA_DIR"
     openssl req -x509 -newkey rsa:2048 -nodes \
-        -keyout "$CA_TMP/mitmproxy-ca.key" \
-        -out "$CA_TMP/mitmproxy-ca.pem" \
+        -keyout "$CA_KEY" \
+        -out "$CA_CERT" \
         -days 3650 \
         -subj "/CN=mitmproxy/O=BabyClaw/C=SG" \
         -addext "basicConstraints=critical,CA:TRUE" \
         -addext "keyUsage=critical,keyCertSign,cRLSign"
-    mkdir -p "$CA_DIR"
-    cp "$CA_TMP"/mitmproxy-ca.* "$CA_DIR"/
     chmod 600 "$CA_KEY" "$CA_CERT"
-    rm -rf "$CA_TMP"
     echo "[proxy] CA generated: $CA_CERT"
+fi
+
+# Share CA cert with claw container via named volume
+if [ -d "$CA_SHARE" ] && [ -w "$CA_SHARE" ]; then
+    cp "$CA_CERT" "$CA_SHARE/mitmproxy-ca.pem"
 fi
 
 exec mitmdump \

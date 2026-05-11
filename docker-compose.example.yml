@@ -53,9 +53,10 @@ services:
       - ./icap/injection_patterns.txt:/etc/icap/injection_patterns.txt:ro
       - ./icap/block-page.html:/etc/icap/block-page.html:ro
       - ./icap/bypass_domains.txt:/etc/icap/bypass_domains.txt:ro
-      - ./scratch/proxy-ca:/home/mitmproxy/.mitmproxy:rw
+      - proxy-ca:/ca-share:rw
     tmpfs:
       - /tmp:size=64M,mode=1777
+      - /home/mitmproxy/.mitmproxy:size=16M,mode=700
     networks:
       - claw_net
     security_opt:
@@ -99,7 +100,7 @@ services:
       - TELEGRAM_ALLOW_FROM=${TELEGRAM_ALLOW_FROM:-[]}
       - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
       - TZ=${TZ:-UTC}
-      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/mitmproxy-ca.pem
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/proxy-ca/mitmproxy-ca.pem
     volumes:
       - ./claw/soul.md:/home/claw/.openclaw/soul.md:ro
       - ./claw/agents.md:/home/claw/.openclaw/agents.md:ro
@@ -107,7 +108,7 @@ services:
       - ./claw/sources.md:/home/claw/.openclaw/workspace/SOURCES.md:ro
       - ./scratch/claw:/home/claw/scratch:rw
       - ./claw/entrypoint.sh:/entrypoint.sh:ro
-      - ./scratch/proxy-ca/mitmproxy-ca.pem:/etc/ssl/certs/mitmproxy-ca.pem:ro
+      - proxy-ca:/etc/ssl/certs/proxy-ca:ro
     tmpfs:
       - /tmp:size=256M,mode=1777
       - /home/claw/.openclaw/secrets:size=1M,mode=700
@@ -124,6 +125,9 @@ services:
     cpus: "2.0"
     pids_limit: 128
     entrypoint: ["/bin/bash", "/entrypoint.sh"]
+
+volumes:
+  proxy-ca:
 
 networks:
   proxy_net:
