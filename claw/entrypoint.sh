@@ -37,8 +37,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
         "request": { "allowPrivateNetwork": true },
         "models": [
           {
-            "id": "claude-haiku-4-5",
-            "name": "Claude Haiku 4.5",
+            "id": "deepseek-v4-flash",
+            "name": "DeepSeek V4 Flash",
             "reasoning": false,
             "input": ["text"],
             "contextWindow": 200000,
@@ -50,7 +50,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/claude-haiku-4-5", "fallbacks": [] },
+      "model": { "primary": "deepseek/deepseek-v4-flash", "fallbacks": [] },
       "workspace": "/home/claw/scratch",
       "userTimezone": "${TZ:-UTC}",
       "thinkingDefault": "off",
@@ -62,7 +62,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
         "id": "main",
         "default": true,
         "name": "BabyClaw",
-        "model": { "primary": "openai/claude-haiku-4-5", "fallbacks": [] },
+        "model": { "primary": "deepseek/deepseek-v4-flash", "fallbacks": [] },
         "thinkingDefault": "off",
         "reasoningDefault": "off",
         "skills": [],
@@ -130,6 +130,6 @@ cp /home/claw/.openclaw/cron/jobs.json "$HOME/.openclaw/cron/jobs.json" 2>/dev/n
 rm -f "$HOME/BOOTSTRAP.md" "$HOME/.openclaw/agents/main/agent/BOOTSTRAP.md"
 
 echo "[babyclaw] State dir: $HOME/.openclaw (workspace: $HOME)"
-echo "[babyclaw] Gateway starting with openai/claude-haiku-4-5..."
+echo "[babyclaw] Gateway starting with deepseek/deepseek-v4-flash..."
 echo "[babyclaw] Telegram bot configured, channel notifications enabled"
 exec openclaw gateway --bind loopback

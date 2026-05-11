@@ -8,7 +8,7 @@
       "tz": "UTC",
       "session": "session:your-workflow",
       "message": "Describe the workflow to run — this gets sent as a system message to the agent.",
-      "model": "litellm/your-model",
+      "model": "deepseek/deepseek-v4-flash",
       "fallbacks": [],
       "delivery": {
         "mode": "announce",

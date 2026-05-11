@@ -37,12 +37,11 @@ graph TD
     D[🌐 Internet]
     E[☁️ Cloudflare DNS<br/>1.1.1.2]
     F[📱 Telegram API<br/>api.telegram.org]
-    G[🤖 LiteLLM Bridge<br/>babyclaw_claw_net]
+    G[🤖 DeepSeek API<br/>api.deepseek.com]
 
     subgraph "Docker Network: claw_net (10.41.0.0/24)"
         A
         B
-        G
     end
 
     subgraph "Docker Network: proxy_net (10.40.0.0/24)"
@@ -70,7 +69,7 @@ graph TD
 
 1. **OpenClaw** fetches a URL (RSS feed, news article, API). All traffic routes through
    `http_proxy=http://icap:1344` except destinations in `NO_PROXY` (Telegram API,
-   LiteLLM bridge).
+   DeepSeek API).
 
 2. **Inspection Proxy** receives the request. For plain HTTP it forwards and scans the
    response. For HTTPS it performs on-the-fly TLS termination: generates a per-host
@@ -103,7 +102,7 @@ graph TD
 
 5. **What's NOT inspected:**
    - Telegram API calls (bypassed via `NO_PROXY` — bot token is already scoped)
-   - LiteLLM bridge calls (bypassed — internal trusted service on shared network)
+   - DeepSeek API calls (bypassed — trusted model provider endpoint)
    - Localhost traffic (exempt from proxy chain)
 
 ### Network isolation
@@ -123,7 +122,7 @@ claw_net (10.41.0.0/24)         proxy_net (10.40.0.0/24)
 - **proxy_net** — Squid alone sits here, bridging claw_net to the outside world.
 - **Cross-network** — only ICAP can reach Squid; claw cannot reach Squid directly.
 - Neither network is `internal: true` — both need outbound access (claw_net for
-  LiteLLM bridge, proxy_net for internet egress).
+  DeepSeek API, proxy_net for internet egress).
 
 ### Defense layers at a glance
 
@@ -181,7 +180,7 @@ babyclaw-preferences/            (private — your config)
 
 # 2. Create secrets file
 cp secrets.env.example secrets.env
-# Edit secrets.env with your LiteLLM key and Telegram bot token
+# Edit secrets.env with your DeepSeek API key and Telegram bot token
 
 # 3. Set up your preferences (private config repo)
 mkdir -p ../babyclaw-preferences/claw ../babyclaw-preferences/vendir
@@ -342,7 +341,7 @@ The `forbid-private-files` hook mirrors `.gitignore` — it prevents accidentall
 
 - Docker Engine 24.0+ with Docker Compose
 - 4GB RAM available (stack uses ~2.5GB at peak)
-- A [LiteLLM](https://docs.litellm.ai) gateway or Anthropic API key
+- A [DeepSeek API key](https://platform.deepseek.com/api_keys)
 - Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
 - [vendir](https://carvel.dev/vendir/) for config syncing (or copy files manually)
 - [pre-commit](https://pre-commit.com) for commit guardrails

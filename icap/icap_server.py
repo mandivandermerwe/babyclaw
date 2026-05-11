@@ -134,7 +134,7 @@ def generate_host_cert(hostname: str) -> tuple[str, str]:
     rc = os.system(
         f"openssl x509 -req -in {csr_path} "
         f"-CA {CA_CERT} -CAkey {CA_KEY} "
-        f"-set_serial {serial:08x} "
+        f"-set_serial {serial} "
         f"-out {cert_path} -days 365 2>/dev/null"
     )
     try:
@@ -199,9 +199,13 @@ def https_connect_inspect(conn: socket.socket, target_host: str, target_port: st
 
     # 5. Fetch the URL over real TLS through Squid
     try:
+        upstream_headers = {"User-Agent": "BabyClaw/1.0", "Accept": "*/*"}
+        for key, val in req_headers.items():
+            if key in ("authorization", "content-type", "x-api-key"):
+                upstream_headers[key] = val
         upstream_req = urllib.request.Request(
             url if url.startswith("http") else f"https://{target_host}{url}",
-            headers={"User-Agent": "BabyClaw/1.0", "Accept": "*/*"},
+            headers=upstream_headers,
             method=method if method in ("GET", "HEAD") else "GET"
         )
         with opener.open(upstream_req, timeout=15) as up_resp:
@@ -317,9 +321,13 @@ while True:
 
             # Plain HTTP — fetch upstream, scan, return
             try:
+                upstream_headers = {"User-Agent": "BabyClaw/1.0", "Accept": "*/*"}
+                for key, val in req_headers.items():
+                    if key in ("authorization", "content-type", "x-api-key"):
+                        upstream_headers[key] = val
                 upstream_req = urllib.request.Request(
                     url,
-                    headers={"User-Agent": "BabyClaw/1.0", "Accept": "*/*"},
+                    headers=upstream_headers,
                     method=method
                 )
                 with opener.open(upstream_req, timeout=15) as resp:
