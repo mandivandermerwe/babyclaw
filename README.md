@@ -339,11 +339,24 @@ The `forbid-private-files` hook mirrors `.gitignore` — it prevents accidentall
 `claw/soul.md`, `claw/agents.md`, `claw/sources.md`, `claw/cron/`, `docker-compose.yml`,
 `vendir.yml`, `vendir.lock.yml`, `secrets.env`, `.env`, and TLS private keys.
 
+## Model provider
+
+BabyClaw does not bundle or prescribe a specific LLM provider. It connects directly
+to the model API you configure — no intermediate gateway or aggregator.
+
+The default entrypoint ships with DeepSeek as an example, but you can switch to any
+OpenAI-compatible API by editing the provider block in `entrypoint.sh` and the model
+references in `claw/cron/jobs.example.json`. Configure your API key in `secrets.env`.
+
+If you prefer an LLM gateway (LiteLLM, OpenRouter, etc.), set the provider `baseUrl`
+and model IDs accordingly — the proxy chain passes all headers and request bodies
+through transparently.
+
 ## Requirements
 
 - Docker Engine 24.0+ with Docker Compose
 - 4GB RAM available (stack uses ~2.5GB at peak)
-- A [DeepSeek API key](https://platform.deepseek.com/api_keys)
+- An API key for your LLM provider (default: [DeepSeek](https://platform.deepseek.com/api_keys))
 - Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
 - [vendir](https://carvel.dev/vendir/) for config syncing (or copy files manually)
 - [pre-commit](https://pre-commit.com) for commit guardrails

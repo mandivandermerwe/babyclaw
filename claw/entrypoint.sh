@@ -16,13 +16,6 @@ CONFIG_FILE="$HOME/.openclaw/openclaw.json"
 IDENTITY_FILE="$HOME/.openclaw/agents/main/agent/IDENTITY.md"
 USER_FILE="$HOME/.openclaw/agents/main/agent/USER.md"
 
-# ── Resolve LiteLLM host IP ───────────────────────────────────────────
-HOST_IP="host.docker.internal"
-if ! getent hosts host.docker.internal >/dev/null 2>&1; then
-  HOST_IP=$(ip route show default 2>/dev/null | awk '{print $3}' | head -1 || echo "172.17.0.1")
-  echo "[babyclaw] host.docker.internal not resolvable, using gateway: $HOST_IP"
-fi
-
 # ── Generate config on first boot (preserve across restarts) ──────────
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "[babyclaw] First boot — generating config..."
@@ -30,11 +23,10 @@ if [ ! -f "$CONFIG_FILE" ]; then
 {
   "models": {
     "providers": {
-      "openai": {
-        "baseUrl": "http://$HOST_IP:4000/v1",
-        "apiKey": "${LITELLM_API_KEY:-ollama}",
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com/v1",
+        "apiKey": "${DEEPSEEK_API_KEY:-}",
         "api": "openai-completions",
-        "request": { "allowPrivateNetwork": true },
         "models": [
           {
             "id": "deepseek-v4-flash",

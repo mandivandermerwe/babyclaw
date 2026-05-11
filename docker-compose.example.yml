@@ -88,9 +88,9 @@ services:
       # Route ALL traffic through inspection proxy (→ Squid → internet)
       - http_proxy=http://proxy:1344
       - https_proxy=http://proxy:1344
-      - NO_PROXY=127.0.0.1,localhost,192.168.65.254,host.docker.internal,api.telegram.org,litellm-bridge,litellm-bridge:4000
-      # LiteLLM API key for local gateway (ollama token)
-      - LITELLM_API_KEY=${LITELLM_API_KEY:-ollama}
+      - NO_PROXY=127.0.0.1,localhost,192.168.65.254,host.docker.internal,api.telegram.org
+      # DeepSeek API key (from platform.deepseek.com)
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       # Telegram bot
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
@@ -130,7 +130,7 @@ networks:
         - subnet: 10.40.0.0/24
   claw_net:
     driver: bridge
-    # NOTE: not internal — OpenClaw needs direct host access for LiteLLM gateway
+    # NOTE: not internal — OpenClaw needs outbound API access (proxied through Squid)
     # Internet-bound traffic still goes through the proxy chain
     ipam:
       config:
