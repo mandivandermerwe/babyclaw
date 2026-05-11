@@ -69,11 +69,11 @@ services:
     cpus: "1.0"
     pids_limit: 64
     healthcheck:
-      test: ["CMD", "mitmdump", "--version"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "python3 -c 'import socket; s=socket.socket(); s.connect(\"127.0.0.1\",1344); s.close()' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 10s
 
   # ── OpenClaw — warm standby, polls Telegram, runs news digest ────────
   claw:
