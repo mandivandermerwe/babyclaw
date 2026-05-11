@@ -120,8 +120,10 @@ services:
       - ALL
     read_only: true
     depends_on:
-      - proxy
-      - squid
+      proxy:
+        condition: service_healthy
+      squid:
+        condition: service_healthy
     mem_limit: 3G
     mem_reservation: 512M
     cpus: "2.0"
