@@ -1,12 +1,14 @@
 FROM mitmproxy/mitmproxy:11.1.3
 
-RUN mkdir -p /etc/icap && chown -R mitmproxy:mitmproxy /etc/icap
+USER root
+RUN apk add --no-cache curl && \
+    mkdir -p /etc/icap && chown -R mitmproxy:mitmproxy /etc/icap
+USER mitmproxy
 
 COPY addon.py /app/addon.py
 COPY injection_patterns.txt /etc/icap/injection_patterns.txt
 COPY block-page.html /etc/icap/block-page.html
 
-USER mitmproxy
 EXPOSE 1344
 
 # mitmproxy generates its own CA in ~/.mitmproxy on first run.

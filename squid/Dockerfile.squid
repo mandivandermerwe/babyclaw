@@ -1,5 +1,8 @@
 FROM ubuntu/squid:latest
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Override the default entrypoint
 COPY squid.conf /etc/squid/squid.conf
 COPY blacklist.domains /etc/squid/blacklist.domains
