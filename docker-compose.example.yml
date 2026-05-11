@@ -54,6 +54,8 @@ services:
       - ./icap/block-page.html:/etc/icap/block-page.html:ro
       - ./icap/bypass_domains.txt:/etc/icap/bypass_domains.txt:ro
       - ./scratch/proxy-ca:/home/mitmproxy/.mitmproxy:rw
+    tmpfs:
+      - /tmp:size=64M,mode=1777
     networks:
       - claw_net
     security_opt:
