@@ -16,13 +16,15 @@ if [ ! -f "$CA_CERT" ]; then
         -subj "/CN=mitmproxy/O=BabyClaw/C=SG" \
         -addext "basicConstraints=critical,CA:TRUE" \
         -addext "keyUsage=critical,keyCertSign,cRLSign"
-    chmod 600 "$CA_KEY" "$CA_CERT"
+    chmod 600 "$CA_KEY"
+    chmod 644 "$CA_CERT"
     echo "[proxy] CA generated: $CA_CERT"
 fi
 
 # Share CA cert with claw container via named volume
 if [ -d "$CA_SHARE" ] && [ -w "$CA_SHARE" ]; then
-    cp "$CA_CERT" "$CA_SHARE/mitmproxy-ca.pem"
+    cp -f "$CA_CERT" "$CA_SHARE/mitmproxy-ca.pem"
+    chmod 644 "$CA_SHARE/mitmproxy-ca.pem"
 fi
 
 exec mitmdump \
@@ -33,4 +35,5 @@ exec mitmdump \
     --set tls_version_server_min=UNBOUNDED \
     --set tls_version_client_min=UNBOUNDED \
     --scripts /app/addon.py \
-    --set stream_large_bodies=5m
+    --set stream_large_bodies=5m \
+    --set confdir="$CA_DIR"
