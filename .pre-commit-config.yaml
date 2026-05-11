@@ -27,8 +27,6 @@ repos:
               "vendir.lock.yml"
               "secrets.env$"
               ".env$"
-              "certs/babyclaw-ca.key"
-              "certs/babyclaw-ca.pem"
             )
             for f in "${private_files[@]}"; do
               if git diff --cached --name-only | grep -q "^${f}"; then

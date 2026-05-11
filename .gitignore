@@ -1,7 +1,5 @@
 secrets.env
 scratch/
-certs/babyclaw-ca.key
-certs/babyclaw-ca.pem
 .env
 
 # Synced from private config repo via vendir — do not commit
