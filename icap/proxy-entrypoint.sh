@@ -40,6 +40,7 @@ exec mitmdump \
     --set connection_strategy=lazy \
     --set tls_version_server_min=UNBOUNDED \
     --set tls_version_client_min=UNBOUNDED \
+    --set ignore_hosts=api.telegram.org \
     --scripts /app/addon.py \
     --set stream_large_bodies=5m \
     --set confdir="$CA_DIR"
