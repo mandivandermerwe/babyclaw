@@ -9,12 +9,15 @@ COPY block-page.html /etc/icap/block-page.html
 USER mitmproxy
 EXPOSE 1344
 
+# mitmproxy generates its own CA in ~/.mitmproxy on first run.
+# We bind-mount a persistent volume so the CA survives restarts
+# and mount the public cert for the claw container to trust.
+# The claw container adds /etc/ssl/certs/mitmproxy-ca.pem via
+# NODE_EXTRA_CA_CERTS.
 ENTRYPOINT ["mitmproxy", "--mode", "upstream:http://squid:3128", \
     "--listen-host", "0.0.0.0", "--listen-port", "1344", \
     "--set", "connection_strategy=lazy", \
     "--set", "tls_version_server_min=UNBOUNDED", \
     "--set", "tls_version_client_min=UNBOUNDED", \
-    "--certs", "/etc/icap/ca/babyclaw-ca.pem", \
-    "--certs-key", "/etc/icap/ca/babyclaw-ca.key", \
     "--scripts", "/app/addon.py", \
     "--set", "stream_large_bodies=5m"]
