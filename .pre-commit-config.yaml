@@ -21,7 +21,7 @@ repos:
               "claw/soul.md"
               "claw/agents.md"
               "claw/sources.md"
-              "claw/cron/"
+              "claw/cron/jobs.json"
               "docker-compose.yml"
               "vendir.yml"
               "vendir.lock.yml"

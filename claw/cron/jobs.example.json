@@ -1,16 +1,20 @@
-[
-  {
-    "name": "Example — Morning Digest",
-    "cron": "0 8 * * *",
-    "tz": "UTC",
-    "session": "session:your-workflow",
-    "message": "Describe the workflow to run — this gets sent as a system message to the agent.",
-    "model": "litellm/your-model",
-    "fallbacks": [],
-    "delivery": {
-      "mode": "announce",
-      "channel": "telegram",
-      "to": "group:${TELEGRAM_CHAT_ID}"
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "example-morning-digest",
+      "name": "Example — Morning Digest",
+      "cron": "0 8 * * *",
+      "tz": "UTC",
+      "session": "session:your-workflow",
+      "message": "Describe the workflow to run — this gets sent as a system message to the agent.",
+      "model": "litellm/your-model",
+      "fallbacks": [],
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "group:${TELEGRAM_CHAT_ID}"
+      }
     }
-  }
-]
+  ]
+}
