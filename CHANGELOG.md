@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/sdkks/babyclaw/compare/v1.0.0...v1.0.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* config example ([304eabb](https://github.com/sdkks/babyclaw/commit/304eabbd85216b9d98229b30ea3ab13ad96d567c))
+
 # 1.0.0 (2026-05-10)
 
 
