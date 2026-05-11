@@ -100,7 +100,6 @@ services:
       - TELEGRAM_ALLOW_FROM=${TELEGRAM_ALLOW_FROM:-[]}
       - GATEWAY_TOKEN=${GATEWAY_TOKEN:-}
       - TZ=${TZ:-UTC}
-      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/proxy-ca/mitmproxy-ca.pem
     volumes:
       - ./claw/soul.md:/home/claw/.openclaw/soul.md:ro
       - ./claw/agents.md:/home/claw/.openclaw/agents.md:ro
@@ -120,6 +119,9 @@ services:
     cap_drop:
       - ALL
     read_only: true
+    depends_on:
+      - proxy
+      - squid
     mem_limit: 3G
     mem_reservation: 512M
     cpus: "2.0"

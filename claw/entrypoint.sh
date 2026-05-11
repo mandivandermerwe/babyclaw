@@ -118,15 +118,35 @@ cp /home/claw/.openclaw/agents.md "$HOME/AGENTS.md" 2>/dev/null || true
 cp /home/claw/.openclaw/workspace/SOURCES.md "$HOME/SOURCES.md" 2>/dev/null || true
 cp /home/claw/.openclaw/cron/jobs.json "$HOME/.openclaw/cron/jobs.json" 2>/dev/null || true
 
-# ── Copy proxy CA cert to a local path with correct permissions ──────
-# The named volume may have restrictive ownership from the proxy
-# container (different UID). Copy to tmpfs so Node.js can read it.
-if [ -f /etc/ssl/certs/proxy-ca/mitmproxy-ca.pem ]; then
+# ── Wait for proxy CA cert and copy to a local path with correct perms ─
+# The named volume may have restrictive ownership from the proxy container.
+# We poll for the cert (proxy generates it on first boot), copy to tmpfs,
+# and export NODE_EXTRA_CA_CERTS so Node.js reads it at startup.
+PROXY_CA_SRC=/etc/ssl/certs/proxy-ca/mitmproxy-ca.pem
+PROXY_CA_DST=/tmp/proxy-ca/mitmproxy-ca.pem
+
+if [ -f "$PROXY_CA_SRC" ]; then
     mkdir -p /tmp/proxy-ca
-    cp -f /etc/ssl/certs/proxy-ca/mitmproxy-ca.pem /tmp/proxy-ca/mitmproxy-ca.pem
-    chmod 644 /tmp/proxy-ca/mitmproxy-ca.pem
-    export NODE_EXTRA_CA_CERTS=/tmp/proxy-ca/mitmproxy-ca.pem
-    echo "[babyclaw] Proxy CA cert copied to /tmp/proxy-ca/mitmproxy-ca.pem"
+    cp -f "$PROXY_CA_SRC" "$PROXY_CA_DST"
+    chmod 644 "$PROXY_CA_DST"
+    export NODE_EXTRA_CA_CERTS="$PROXY_CA_DST"
+    echo "[babyclaw] Proxy CA cert copied to $PROXY_CA_DST"
+else
+    # Poll for up to 30s — proxy may still be generating on first boot
+    for i in $(seq 1 30); do
+        if [ -f "$PROXY_CA_SRC" ]; then
+            mkdir -p /tmp/proxy-ca
+            cp -f "$PROXY_CA_SRC" "$PROXY_CA_DST"
+            chmod 644 "$PROXY_CA_DST"
+            export NODE_EXTRA_CA_CERTS="$PROXY_CA_DST"
+            echo "[babyclaw] Proxy CA cert copied to $PROXY_CA_DST (after ${i}s)"
+            break
+        fi
+        sleep 1
+    done
+    if [ ! -f "$PROXY_CA_DST" ]; then
+        echo "[babyclaw] WARNING: Proxy CA cert not found at $PROXY_CA_SRC — HTTPS through proxy may fail"
+    fi
 fi
 
 # ── Remove bootstrap blocker if it exists ────────────────────────────
