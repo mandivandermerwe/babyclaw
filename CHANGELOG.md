@@ -1,3 +1,14 @@
+## [1.1.4](https://github.com/sdkks/babyclaw/compare/v1.1.3...v1.1.4) (2026-05-12)
+
+
+### Bug Fixes
+
+* **proxy:** handle channel_post and edited_channel_post as message-like updates ([acf3d79](https://github.com/sdkks/babyclaw/commit/acf3d7946bea980220d5c68bb2a893c5f441d1be))
+* **proxy:** remove hard is_bot check, cache is source of truth for reply enrichment ([567af06](https://github.com/sdkks/babyclaw/commit/567af06f32130a2e52a1162e17d0e08916fc710c))
+* **proxy:** rewrite channel_post → message with synthetic sender for OpenClaw compatibility ([5eb8260](https://github.com/sdkks/babyclaw/commit/5eb826057847ebae53da8bb26215450168b48ce6))
+* **proxy:** rewrite chat.type channel → supergroup for OpenClaw routing ([3ff0e52](https://github.com/sdkks/babyclaw/commit/3ff0e5250ef1e6e85a5f06ceae53a2afcaf7e4ee))
+* **proxy:** skip bot-sent messages to prevent feedback loops in channels ([3497bc3](https://github.com/sdkks/babyclaw/commit/3497bc353a8631e7045e2f90ad0d2eaa185909ed))
+
 ## [1.1.3](https://github.com/sdkks/babyclaw/compare/v1.1.2...v1.1.3) (2026-05-12)
 
 
