@@ -185,6 +185,11 @@ class TelegramReplyEnricher:
                     continue
 
             msg_id = msg.get("message_id", "?")
+            # Skip messages the bot itself sent — prevents feedback loops in channels
+            if str(msg_id) in _message_cache:
+                print(f"[proxy] update {i} (msg_id={msg_id}) is a bot-sent message — skipping")
+                continue
+
             reply_to = msg.get("reply_to_message", {})
             user_text = msg.get("text", "")[:60]
             print(f"[proxy] update {i} (id={update_id}) msg_id={msg_id} text='{user_text}' reply_to={bool(reply_to)}")
