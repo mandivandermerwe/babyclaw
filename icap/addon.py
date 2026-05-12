@@ -145,16 +145,33 @@ class TelegramReplyEnricher:
         if not updates:
             print(f"[proxy] getUpdates returned 0 updates")
             return
+        print(f"[proxy] processing {len(updates)} update(s)")
         modified = False
-        for update in updates:
+        for i, update in enumerate(updates):
+            update_id = update.get("update_id", "?")
             msg = update.get("message", {})
+            if not msg:
+                # Check other update types
+                for key in ("edited_message", "channel_post", "edited_channel_post", "callback_query"):
+                    if key in update:
+                        print(f"[proxy] update {i} (id={update_id}) is '{key}', skipping")
+                        break
+                else:
+                    print(f"[proxy] update {i} (id={update_id}) has no recognized message field: {list(update.keys())}")
+                continue
+
+            msg_id = msg.get("message_id", "?")
             reply_to = msg.get("reply_to_message", {})
+            user_text = msg.get("text", "")[:60]
+            print(f"[proxy] update {i} (id={update_id}) msg_id={msg_id} text='{user_text}' reply_to={bool(reply_to)}")
+
             if not reply_to:
+                print(f"[proxy] update {i} (msg_id={msg_id}) has no reply_to_message — skipping")
                 continue
 
             reply_msg_id = reply_to.get("message_id")
             if not reply_msg_id:
-                print(f"[proxy] reply_to_message missing message_id")
+                print(f"[proxy] update {i} (msg_id={msg_id}) reply_to_message missing message_id — skipping")
                 continue
 
             original_text = _message_cache.get(str(reply_msg_id), "")
