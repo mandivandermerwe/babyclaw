@@ -3,8 +3,8 @@ FROM mitmproxy/mitmproxy:11.1.3
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /etc/icap /ca-share && \
-    chown -R mitmproxy:mitmproxy /etc/icap /ca-share
+    mkdir -p /etc/icap /ca-share /proxy-state && \
+    chown -R mitmproxy:mitmproxy /etc/icap /ca-share /proxy-state
 
 COPY addon.py /app/addon.py
 COPY injection_patterns.txt /etc/icap/injection_patterns.txt

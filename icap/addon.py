@@ -103,25 +103,17 @@ class TelegramReplyEnricher:
         if not self.is_telegram_api(flow):
             return
         if not flow.response or not flow.response.content:
-            print(f"[proxy] telegram response empty: {flow.request.path}")
             return
-
-        print(f"[proxy] telegram {flow.request.method} {flow.request.path} ({len(flow.response.content)}b)")
 
         try:
             data = json.loads(flow.response.content.decode("utf-8", errors="replace"))
-        except Exception as e:
-            print(f"[proxy] failed to parse telegram response: {e}")
+        except Exception:
             return
 
         if self.is_send_message(flow):
-            print(f"[proxy] handling sendMessage response")
             self._cache_sent_message(data)
         elif self.is_get_updates(flow):
-            print(f"[proxy] handling getUpdates response")
             self._enrich_updates(data, flow)
-        else:
-            print(f"[proxy] unhandled telegram endpoint: {flow.request.path}")
 
     def _cache_sent_message(self, data):
         if not data.get("ok") or "result" not in data:
