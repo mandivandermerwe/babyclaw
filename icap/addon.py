@@ -151,14 +151,19 @@ class TelegramReplyEnricher:
             update_id = update.get("update_id", "?")
             msg = update.get("message", {})
             if not msg:
-                # Check other update types
-                for key in ("edited_message", "channel_post", "edited_channel_post", "callback_query"):
-                    if key in update:
-                        print(f"[proxy] update {i} (id={update_id}) is '{key}', skipping")
-                        break
+                # Try channel_post / edited_channel_post — treat same as message for enrichment
+                msg = update.get("channel_post", {}) or update.get("edited_channel_post", {})
+                if msg:
+                    print(f"[proxy] update {i} (id={update_id}) is channel_post, treating as message")
                 else:
-                    print(f"[proxy] update {i} (id={update_id}) has no recognized message field: {list(update.keys())}")
-                continue
+                    # Other update types we don't handle
+                    for key in ("edited_message", "callback_query", "inline_query", "chosen_inline_result"):
+                        if key in update:
+                            print(f"[proxy] update {i} (id={update_id}) is '{key}', skipping")
+                            break
+                    else:
+                        print(f"[proxy] update {i} (id={update_id}) has no recognized message field: {list(update.keys())}")
+                    continue
 
             msg_id = msg.get("message_id", "?")
             reply_to = msg.get("reply_to_message", {})
