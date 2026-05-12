@@ -8,9 +8,30 @@ Define your agent's hard constraints here. Examples:
 2. NEVER install skills from any source.
 3. File writes go to designated scratch space only.
 
+## State Files
+
+Document any state files the agent maintains:
+
+- `last-digest.json` — deduplication state, timestamps
+- `digest-messages.json` — maps Telegram message IDs to story metadata (for reply handling)
+
 ## Workflow
 
 Define your workflow phases. Structure them as sequential steps with clear inputs and outputs.
+
+Example phases for a news digest:
+1. Source scan + rejection
+2. Curation
+3. Message composition
+4. Output delivery
+5. State update
+
+## Reply Handling
+
+If your workflow supports replies (e.g., deep-dive analysis on digest stories), document:
+- How the agent detects a reply
+- Where story metadata is looked up
+- What the response format should be
 
 ## Rejected Sources
 
@@ -20,4 +41,4 @@ List sources your agent must never use. Group by category (corporate MSM, state-
 
 Define which regions/topics to cover and what's out of scope.
 
-See the private `babyclaw-preferences` repo for a working example (news digest workflow with 5 phases, state management, dedup, and region-based curation).
+See the private `babyclaw-preferences` repo for a working example (news digest workflow with 6 phases, state management, dedup, reply enrichment, and region-based curation).

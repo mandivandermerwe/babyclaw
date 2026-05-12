@@ -94,12 +94,13 @@ graph TD
      (malware-filtering DNS)
    - **HTTPS enforcement** — only allows outbound connections on ports 80, 443, 4000, 8080
 
-5. **What's NOT inspected:**
-   - Telegram API calls — response body scanning skipped via `bypass_domains.txt`
-     (request still flows through proxy chain; bot token is scoped)
-   - DeepSeek API calls — response body scanning skipped via `bypass_domains.txt`
+5. **Traffic handling by domain:**
+   - **DeepSeek API calls** — response body scanning skipped via `bypass_domains.txt`
      (request still flows through proxy chain)
-   - Localhost traffic (exempt from proxy chain via `NO_PROXY`)
+   - **Telegram API calls** — TLS-intercepted by mitmproxy for reply enrichment (see
+     below), but response body scanning is skipped to avoid false positives on Bot API
+     JSON responses
+   - **Localhost traffic** — exempt from proxy chain via `NO_PROXY`
 
 ### Network isolation
 
@@ -291,7 +292,7 @@ babyclaw/
 │   ├── Dockerfile.claw     OpenClaw container
 │   └── entrypoint.sh       Runtime config generation
 ├── icap/                   Content inspection proxy (mitmproxy addon)
-│   ├── addon.py            mitmproxy addon with body scanning + TLS termination
+│   ├── addon.py            mitmproxy addon: body scanning + TLS termination + Telegram reply enrichment
 │   ├── Dockerfile.mitm     mitmproxy image with addon
 │   ├── injection_patterns.txt  Regex rules (6 categories, 30+ patterns)
 │   ├── bypass_domains.txt  Domains whose response bodies skip scanning
@@ -347,6 +348,25 @@ references in `claw/cron/jobs.example.json`. Configure your API key in `secrets.
 If you prefer an LLM gateway (OpenRouter, etc.), set the provider `baseUrl`
 and model IDs accordingly — the proxy chain passes all headers and request bodies
 through transparently.
+
+### Telegram reply enrichment
+
+When a user replies to a digest message in Telegram, the proxy intercepts the
+`getUpdates` response and injects the original message context into the reply text.
+This works around an OpenClaw bug where `reply_to_message` context is stripped from
+the LLM prompt. The agent sees:
+
+```
+[Reply to BabyClaw msg:123 — "original message text..."]
+
+What does this mean?
+```
+
+and can look up the story in `digest-messages.json` to produce a deep-dive analysis.
+
+The proxy caches outbound `sendMessage` responses to `/proxy-state/sent-messages.json`
+and reads them back when enriching inbound replies. This requires the `proxy-state`
+named volume (declared in `docker-compose.example.yml`).
 
 ## Requirements
 

@@ -13,7 +13,7 @@
       "delivery": {
         "mode": "announce",
         "channel": "telegram",
-        "to": "group:${TELEGRAM_CHAT_ID}"
+        "to": "-1000000000000"
       }
     }
   ]
