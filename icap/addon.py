@@ -99,21 +99,31 @@ class TelegramReplyEnricher:
     def is_get_updates(self, flow: mitmproxy.http.HTTPFlow) -> bool:
         return self.is_telegram_api(flow) and "getUpdates" in flow.request.path
 
+    def request(self, flow: mitmproxy.http.HTTPFlow):
+        if self.is_telegram_api(flow):
+            print(f"[proxy] telegram req: {flow.request.method} {flow.request.path}")
+
     def response(self, flow: mitmproxy.http.HTTPFlow):
         if not self.is_telegram_api(flow):
             return
         if not flow.response or not flow.response.content:
+            print(f"[proxy] telegram response empty: {flow.request.path}")
             return
 
         try:
             data = json.loads(flow.response.content.decode("utf-8", errors="replace"))
-        except Exception:
+        except Exception as e:
+            print(f"[proxy] failed to parse telegram response: {e}")
             return
 
         if self.is_send_message(flow):
+            print(f"[proxy] handling sendMessage response")
             self._cache_sent_message(data)
         elif self.is_get_updates(flow):
+            print(f"[proxy] handling getUpdates response ({len(data.get('result', []))} updates)")
             self._enrich_updates(data, flow)
+        else:
+            print(f"[proxy] unhandled telegram endpoint: {flow.request.path}")
 
     def _cache_sent_message(self, data):
         if not data.get("ok") or "result" not in data:
@@ -129,26 +139,36 @@ class TelegramReplyEnricher:
 
     def _enrich_updates(self, data, flow: mitmproxy.http.HTTPFlow):
         if not data.get("ok") or "result" not in data:
+            print(f"[proxy] getUpdates response not ok or missing result")
             return
-        updates = data["result"]
+        updates = data.get("result", [])
+        if not updates:
+            print(f"[proxy] getUpdates returned 0 updates")
+            return
         modified = False
         for update in updates:
             msg = update.get("message", {})
             reply_to = msg.get("reply_to_message", {})
             if not reply_to:
                 continue
-            # Only enrich replies to bot messages
-            from_user = reply_to.get("from", {})
-            if not from_user.get("is_bot"):
-                continue
 
             reply_msg_id = reply_to.get("message_id")
-            original_text = _message_cache.get(str(reply_msg_id), "")
-            if not original_text:
-                # Original message not in cache — might be too old or from a different session
+            if not reply_msg_id:
+                print(f"[proxy] reply_to_message missing message_id")
                 continue
 
-            # Build prefix with truncated original text for context
+            original_text = _message_cache.get(str(reply_msg_id), "")
+            if not original_text:
+                # Message not in our cache — check if it's a confirmed non-bot reply
+                from_user = reply_to.get("from", {})
+                if from_user.get("is_bot") is False:
+                    print(f"[proxy] reply to non-bot msg {reply_msg_id} — skipping")
+                else:
+                    print(f"[proxy] reply to msg {reply_msg_id} not in cache (is_bot={from_user.get('is_bot')}) — skipping")
+                continue
+
+            # Message is in our cache — enrich regardless of is_bot
+            # (if it's in our cache, we sent it; message IDs are unique within a chat)
             truncated = original_text.replace("\n", " ").strip()
             if len(truncated) > 200:
                 truncated = truncated[:197] + "..."
@@ -158,12 +178,15 @@ class TelegramReplyEnricher:
             if prefix not in current_text:  # idempotent — don't double-prefix
                 msg["text"] = prefix + current_text
                 modified = True
-                print(f"[proxy] enriched reply to msg {reply_msg_id}")
+                print(f"[proxy] ✓ enriched reply to msg {reply_msg_id}")
+            else:
+                print(f"[proxy] reply to msg {reply_msg_id} already enriched")
 
         if modified:
             new_body = json.dumps(data, ensure_ascii=False).encode("utf-8")
             flow.response.content = new_body
             flow.response.headers["content-length"] = str(len(new_body))
+            print(f"[proxy] getUpdates response modified and returned")
 
 
 # ── Content inspection ───────────────────────────────────────────────
