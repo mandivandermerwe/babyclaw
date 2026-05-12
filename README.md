@@ -368,6 +368,12 @@ The proxy caches outbound `sendMessage` responses to `/proxy-state/sent-messages
 and reads them back when enriching inbound replies. This requires the `proxy-state`
 named volume (declared in `docker-compose.example.yml`).
 
+**Channel support:** The proxy also rewrites `channel_post` updates to `message`
+updates (with a synthetic sender) so OpenClaw can process posts in Telegram
+channels. Bot-sent messages are skipped to prevent feedback loops. Note that
+Telegram channels do not support true `reply_to_message`; follow-up questions
+rely on OpenClaw's session context tracking rather than message-ID-based lookup.
+
 ## Requirements
 
 - Docker Engine 24.0+ with Docker Compose v2 (`docker compose` plugin)
