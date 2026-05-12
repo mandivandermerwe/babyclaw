@@ -147,14 +147,28 @@ class TelegramReplyEnricher:
             return
         print(f"[proxy] processing {len(updates)} update(s)")
         modified = False
+        channel_posts_converted = False
         for i, update in enumerate(updates):
             update_id = update.get("update_id", "?")
             msg = update.get("message", {})
             if not msg:
-                # Try channel_post / edited_channel_post — treat same as message for enrichment
-                msg = update.get("channel_post", {}) or update.get("edited_channel_post", {})
-                if msg:
-                    print(f"[proxy] update {i} (id={update_id}) is channel_post, treating as message")
+                # Convert channel_post / edited_channel_post → message so OpenClaw processes them
+                for key in ("channel_post", "edited_channel_post"):
+                    if key in update:
+                        print(f"[proxy] update {i} (id={update_id}) is {key}, converting to message")
+                        update["message"] = update.pop(key)
+                        msg = update["message"]
+                        channel_posts_converted = True
+                        # OpenClaw expects 'from'; channel posts only have 'sender_chat'
+                        if "from" not in msg:
+                            sender = msg.get("sender_chat", {})
+                            msg["from"] = {
+                                "id": sender.get("id", 0),
+                                "is_bot": False,
+                                "first_name": sender.get("title", "Channel"),
+                            }
+                            print(f"[proxy]   added synthetic 'from' id={msg['from']['id']}")
+                        break
                 else:
                     # Other update types we don't handle
                     for key in ("edited_message", "callback_query", "inline_query", "chosen_inline_result"):
@@ -171,7 +185,7 @@ class TelegramReplyEnricher:
             print(f"[proxy] update {i} (id={update_id}) msg_id={msg_id} text='{user_text}' reply_to={bool(reply_to)}")
 
             if not reply_to:
-                print(f"[proxy] update {i} (msg_id={msg_id}) has no reply_to_message — skipping")
+                print(f"[proxy] update {i} (msg_id={msg_id}) has no reply_to_message — skipping enrichment")
                 continue
 
             reply_msg_id = reply_to.get("message_id")
@@ -204,11 +218,12 @@ class TelegramReplyEnricher:
             else:
                 print(f"[proxy] reply to msg {reply_msg_id} already enriched")
 
-        if modified:
+        if modified or channel_posts_converted:
             new_body = json.dumps(data, ensure_ascii=False).encode("utf-8")
             flow.response.content = new_body
             flow.response.headers["content-length"] = str(len(new_body))
-            print(f"[proxy] getUpdates response modified and returned")
+            action = "enriched" if modified else "converted channel_post"
+            print(f"[proxy] getUpdates response {action} and returned")
 
 
 # ── Content inspection ───────────────────────────────────────────────
