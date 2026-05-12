@@ -168,6 +168,11 @@ class TelegramReplyEnricher:
                                 "first_name": sender.get("title", "Channel"),
                             }
                             print(f"[proxy]   added synthetic 'from' id={msg['from']['id']}")
+                        # OpenClaw likely drops messages where chat.type == 'channel'
+                        # Rewrite to 'supergroup' so it routes through groupPolicy
+                        if msg.get("chat", {}).get("type") == "channel":
+                            msg["chat"]["type"] = "supergroup"
+                            print(f"[proxy]   rewritten chat.type channel → supergroup")
                         break
                 else:
                     # Other update types we don't handle
