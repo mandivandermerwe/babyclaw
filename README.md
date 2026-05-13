@@ -27,6 +27,10 @@ firewall required:
 - **Proxy-enforced traffic** — all outbound traffic is routed through the inspection
   chain via `http_proxy`/`https_proxy` environment variables
 
+## Usage Showcase, my personal news ambassador and analyst
+
+<img src="assets/images/babyclaw_as_news_ambassador.gif" width="30%">
+
 ## Architecture
 
 ```mermaid
@@ -52,11 +56,11 @@ graph TD
     C -->|egress| D
 ```
 
-| Container | Role |
-|-----------|------|
-| **Content Inspection Proxy** (mitmproxy, :1344) | HTTP body scanner + TLS termination for HTTPS inspection |
-| **Squid** (:3128) | Forward proxy with domain blacklist, URL pattern matching, DNS filtering |
-| **OpenClaw** | AI agent gateway with Telegram channel, cron-scheduled workflows |
+| Container                                       | Role                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------ |
+| **Content Inspection Proxy** (mitmproxy, :1344) | HTTP body scanner + TLS termination for HTTPS inspection                 |
+| **Squid** (:3128)                               | Forward proxy with domain blacklist, URL pattern matching, DNS filtering |
+| **OpenClaw**                                    | AI agent gateway with Telegram channel, cron-scheduled workflows         |
 
 ### How a request travels
 
@@ -72,14 +76,14 @@ graph TD
 3. **Response body scanning** checks the content against 30+ regex patterns organized
    into six categories:
 
-   | Category | Detects | Response |
-   |----------|---------|----------|
-   | `pi` — Prompt Injection | System override, jailbreak, constraint bypass | 403 Blocked |
-   | `exfil` — Data Exfiltration | Webhook URLs, data smuggling | 403 Blocked |
-   | `cmd` — Command Injection | Shell metacharacters, interpreter escape | 403 Blocked |
-   | `cred` — Credential Theft | API keys, bearer tokens in response | 403 Blocked |
-   | `rce` — Remote Code Execution | eval/exec patterns, subprocess calls | 403 Blocked |
-   | `mime` — Malicious MIME | Executable content types | 403 Blocked |
+   | Category                      | Detects                                       | Response    |
+   | ----------------------------- | --------------------------------------------- | ----------- |
+   | `pi` — Prompt Injection       | System override, jailbreak, constraint bypass | 403 Blocked |
+   | `exfil` — Data Exfiltration   | Webhook URLs, data smuggling                  | 403 Blocked |
+   | `cmd` — Command Injection     | Shell metacharacters, interpreter escape      | 403 Blocked |
+   | `cred` — Credential Theft     | API keys, bearer tokens in response           | 403 Blocked |
+   | `rce` — Remote Code Execution | eval/exec patterns, subprocess calls          | 403 Blocked |
+   | `mime` — Malicious MIME       | Executable content types                      | 403 Blocked |
 
    If no pattern matches: 204 No Content (pass-through). If blocked: returns
    `block-page.html` with a generic "Content Blocked by Inspection" message.
@@ -124,13 +128,13 @@ claw_net (10.41.0.0/24)         proxy_net (10.40.0.0/24)
 
 ### Defense layers at a glance
 
-| Layer | Control | Implementation |
-|-------|---------|----------------|
-| Network | Egress filtering, DNS blocklist | Squid + Cloudflare 1.1.1.2 |
-| Transport | TLS inspection, HTTPS-only | mitmproxy with on-the-fly cert generation |
-| Content | Response body scanning | Regex injection detection (30+ patterns, 6 categories) via mitmproxy addon |
-| Domain | Default-allow + blacklist | Squid domain + URL pattern blocking |
-| Identity | Immutable personality files | Read-only mounts, anti-rationalization rules |
+| Layer     | Control                         | Implementation                                                             |
+| --------- | ------------------------------- | -------------------------------------------------------------------------- |
+| Network   | Egress filtering, DNS blocklist | Squid + Cloudflare 1.1.1.2                                                 |
+| Transport | TLS inspection, HTTPS-only      | mitmproxy with on-the-fly cert generation                                  |
+| Content   | Response body scanning          | Regex injection detection (30+ patterns, 6 categories) via mitmproxy addon |
+| Domain    | Default-allow + blacklist       | Squid domain + URL pattern blocking                                        |
+| Identity  | Immutable personality files     | Read-only mounts, anti-rationalization rules                               |
 
 ## Configuration
 
@@ -219,14 +223,14 @@ The public repo's `Makefile` copies this into place and runs `vendir sync` befor
 The content inspection proxy (a mitmproxy addon) scans every HTTP and HTTPS response body against
 [regex patterns](icap/injection_patterns.txt) organized into six categories:
 
-| Category | Patterns | Action |
-|----------|----------|--------|
-| `pi` — Prompt Injection | System override, jailbreak, constraint bypass | Block |
-| `exfil` — Data Exfiltration | Webhook URLs, data smuggling | Block |
-| `cmd` — Command Injection | Shell metacharacters, interpreter escape | Block |
-| `cred` — Credential Theft | API key patterns, bearer tokens | Block |
-| `rce` — Remote Code Execution | eval/exec patterns, subprocess calls | Block |
-| `mime` — Malicious MIME Types | Executable content types | Block |
+| Category                      | Patterns                                      | Action |
+| ----------------------------- | --------------------------------------------- | ------ |
+| `pi` — Prompt Injection       | System override, jailbreak, constraint bypass | Block  |
+| `exfil` — Data Exfiltration   | Webhook URLs, data smuggling                  | Block  |
+| `cmd` — Command Injection     | Shell metacharacters, interpreter escape      | Block  |
+| `cred` — Credential Theft     | API key patterns, bearer tokens               | Block  |
+| `rce` — Remote Code Execution | eval/exec patterns, subprocess calls          | Block  |
+| `mime` — Malicious MIME Types | Executable content types                      | Block  |
 
 ### Verified Test Suite
 
@@ -326,11 +330,11 @@ pre-commit install --hook-type commit-msg
 
 Three guardrails run on every commit:
 
-| Hook | Stage | What it does |
-|------|-------|--------------|
-| **gitleaks** | pre-commit | Scans staged files for hardcoded secrets (API keys, tokens, passwords) |
-| **forbid-private-files** | pre-commit | Blocks files that belong in the private `babyclaw-preferences` repo — even if force-staged with `git add -f` |
-| **commitlint** | commit-msg | Requires [Conventional Commits](https://www.conventionalcommits.org/) format (`feat:`, `fix:`, `chore:`, etc.) |
+| Hook                     | Stage      | What it does                                                                                                   |
+| ------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| **gitleaks**             | pre-commit | Scans staged files for hardcoded secrets (API keys, tokens, passwords)                                         |
+| **forbid-private-files** | pre-commit | Blocks files that belong in the private `babyclaw-preferences` repo — even if force-staged with `git add -f`   |
+| **commitlint**           | commit-msg | Requires [Conventional Commits](https://www.conventionalcommits.org/) format (`feat:`, `fix:`, `chore:`, etc.) |
 
 The `forbid-private-files` hook mirrors `.gitignore` — it prevents accidentally pushing
 `claw/soul.md`, `claw/agents.md`, `claw/sources.md`, `claw/cron/`, `docker-compose.yml`,
