@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/sdkks/babyclaw/compare/v1.1.4...v1.1.5) (2026-05-15)
+
+
+### Bug Fixes
+
+* **proxy:** rewrite channel type to "group" instead of "supergroup" ([51e6580](https://github.com/sdkks/babyclaw/commit/51e65800a7d980f6b3a659f718eaf421ebd1b936))
+
 ## [1.1.4](https://github.com/sdkks/babyclaw/compare/v1.1.3...v1.1.4) (2026-05-12)
 
 
