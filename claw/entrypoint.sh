@@ -35,7 +35,7 @@ if [ "$GENERATE_CONFIG" = true ]; then
   "models": {
     "providers": {
       "deepseek": {
-        "baseUrl": "https://api.deepseek.com/v1",
+        "baseUrl": "https://api.deepseek.com",
         "apiKey": "${DEEPSEEK_API_KEY:-}",
         "api": "openai-completions",
         "models": [
@@ -96,6 +96,16 @@ if [ "$GENERATE_CONFIG" = true ]; then
     "mode": "local",
     "bind": "loopback",
     "port": 18789
+  },
+  "plugins": {
+    "entries": {
+      "deepseek": {
+        "enabled": true
+      },
+      "duckduckgo": {
+        "enabled": true
+      }
+    }
   }
 }
 JSONEOF
