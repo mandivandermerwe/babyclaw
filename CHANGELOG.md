@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/sdkks/babyclaw/compare/v1.1.5...v1.2.0) (2026-05-16)
+
+
+### Features
+
+* change search engine to duckduckgo ([05876bc](https://github.com/sdkks/babyclaw/commit/05876bc7354c4eeebb8d0a673fda6c6c456cc46e))
+
 ## [1.1.5](https://github.com/sdkks/babyclaw/compare/v1.1.4...v1.1.5) (2026-05-15)
 
 
