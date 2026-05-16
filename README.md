@@ -195,6 +195,9 @@ make up
 # 4. Test the agent
 docker exec babyclaw-claw openclaw agent \
   --session-id test --message "What is the weather today?"
+
+# 5. Fix config issues (schema migrations, missing plugins)
+docker exec -ti -e HOME=/home/claw/scratch babyclaw-claw openclaw doctor --fix
 ```
 
 ## vendir.yml Example

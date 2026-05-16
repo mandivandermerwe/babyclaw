@@ -42,23 +42,27 @@ if [ "$GENERATE_CONFIG" = true ]; then
           {
             "id": "deepseek-v4-flash",
             "name": "DeepSeek V4 Flash",
-            "reasoning": false,
+            "reasoning": true,
             "input": ["text"],
-            "contextWindow": 200000,
-            "maxTokens": 8192
+            "contextWindow": 1000000,
+            "maxTokens": 384000
           }
         ]
       }
-    }
+    },
+    "mode": "merge"
   },
   "agents": {
     "defaults": {
       "model": { "primary": "deepseek/deepseek-v4-flash", "fallbacks": [] },
       "workspace": "/home/claw/scratch",
       "userTimezone": "${TZ:-UTC}",
-      "thinkingDefault": "off",
-      "reasoningDefault": "off",
-      "sandbox": { "mode": "off" }
+      "sandbox": { "mode": "off" },
+      "models": {
+        "deepseek/deepseek-v4-flash": {
+          "alias": "DeepSeek"
+        }
+      }
     },
     "list": [
       {
@@ -66,8 +70,6 @@ if [ "$GENERATE_CONFIG" = true ]; then
         "default": true,
         "name": "BabyClaw",
         "model": { "primary": "deepseek/deepseek-v4-flash", "fallbacks": [] },
-        "thinkingDefault": "off",
-        "reasoningDefault": "off",
         "skills": [],
         "identity": { "name": "BabyClaw", "emoji": "🗞" }
       }
@@ -99,12 +101,35 @@ if [ "$GENERATE_CONFIG" = true ]; then
   },
   "plugins": {
     "entries": {
+      "openai": {
+        "enabled": true
+      },
       "deepseek": {
         "enabled": true
       },
       "duckduckgo": {
         "enabled": true
       }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "deepseek:default": {
+        "provider": "deepseek",
+        "mode": "api_key"
+      }
+    }
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "provider": "duckduckgo"
+      }
+    }
+  },
+  "messages": {
+    "groupChat": {
+      "visibleReplies": "message_tool"
     }
   }
 }
