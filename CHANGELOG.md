@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/sdkks/babyclaw/compare/v1.2.0...v1.2.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* add duckduckgo plugin and backport openclaw doctor --fix schema changes ([274d519](https://github.com/sdkks/babyclaw/commit/274d51957d1910a26f648ecda882455145d533e3))
+
 # [1.2.0](https://github.com/sdkks/babyclaw/compare/v1.1.5...v1.2.0) (2026-05-16)
 
 
