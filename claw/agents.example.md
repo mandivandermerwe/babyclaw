@@ -12,7 +12,8 @@ Define your agent's hard constraints here. Examples:
 
 Document any state files the agent maintains:
 
-- `last-digest.json` — deduplication state, timestamps
+- `last-digest-meta.json` — tiny metadata file (last run timestamp)
+- `sent-hashes.txt` — append-only dedup log, one SHA-256 hash per line
 - `digest-messages.json` — maps Telegram message IDs to story metadata (for reply handling)
 
 ## Workflow

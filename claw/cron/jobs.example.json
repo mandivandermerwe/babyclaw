@@ -7,7 +7,7 @@
       "cron": "0 8 * * *",
       "tz": "UTC",
       "session": "session:your-workflow",
-      "message": "Describe the workflow to run — this gets sent as a system message to the agent.",
+      "message": "Run the AGENTS.md workflow. The agent reads AGENTS.md for full instructions — keep this message as a concise trigger summary only.",
       "model": "deepseek/deepseek-v4-flash",
       "fallbacks": [],
       "delivery": {
